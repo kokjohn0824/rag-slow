@@ -46,6 +46,22 @@ Coding Agent 參考指南
 
 ---
 
+### 🚢 [DEPLOYMENT.md](DEPLOYMENT.md)
+遠端部署指南
+
+**適合**: DevOps、系統管理員
+
+**內容**:
+- 前置需求和 SSH 設定
+- 快速部署指令
+- 部署流程詳解
+- 驗證和測試
+- 更新和回滾
+- 故障排除
+- 安全建議
+
+---
+
 ## 服務文檔
 
 ### Tempo Latency Anomaly Service
@@ -134,7 +150,9 @@ curl http://localhost:3200/ready   # Tempo
   │
   ├─→ 執行 test-integration.sh（驗證功能）
   │
-  └─→ 參考 AGENT_GUIDE.md（深入開發）
+  ├─→ 參考 AGENT_GUIDE.md（深入開發）
+  │
+  └─→ 閱讀 DEPLOYMENT.md（部署到生產）
 ```
 
 ---
