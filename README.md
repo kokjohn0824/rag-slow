@@ -1,5 +1,11 @@
 # RAG-Slow: 分散式追蹤效能分析系統
 
+[![Anomaly Service](https://img.shields.io/badge/GitHub-Anomaly_Service-blue?logo=github)](https://github.com/kokjohn0824/tempo-latency-anomaly-service)
+[![Trace Demo](https://img.shields.io/badge/GitHub-Trace_Demo-blue?logo=github)](https://github.com/kokjohn0824/tempo-otlp-trace-demo)
+[![Go Version](https://img.shields.io/badge/Go-1.24+-00ADD8?logo=go)](https://go.dev/)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker)](https://www.docker.com/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
 基於 Grafana Tempo 的分散式追蹤效能分析系統，自動識別效能瓶頸並提供原始碼層級的分析。
 
 ## 🎯 系統功能
@@ -23,7 +29,9 @@
 - `GET /v1/traces/{traceId}/longest-span` - 獲取最慢的 span
 - `POST /v1/traces/child-spans` - 獲取 child spans
 
-**文檔**：[tempo-latency-anomaly-service/README.md](tempo-latency-anomaly-service/README.md)
+**連結**：
+- 📖 [專案文檔](tempo-latency-anomaly-service/README.md)
+- 🔗 [GitHub Repository](https://github.com/kokjohn0824/tempo-latency-anomaly-service)
 
 ### 2. Tempo OTLP Trace Demo (Port 8080)
 原始碼映射服務，負責：
@@ -36,7 +44,9 @@
 - `POST /api/source-code` - 根據 span name 獲取原始碼
 - `GET /swagger/` - Swagger UI 文檔
 
-**文檔**：[tempo-otlp-trace-demo/README.md](tempo-otlp-trace-demo/README.md)
+**連結**：
+- 📖 [專案文檔](tempo-otlp-trace-demo/README.md)
+- 🔗 [GitHub Repository](https://github.com/kokjohn0824/tempo-otlp-trace-demo)
 
 ## 🚀 快速開始
 
