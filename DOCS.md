@@ -1,5 +1,15 @@
 # 文檔索引
 
+## 🔗 GitHub Repositories
+
+- **主專案**: https://github.com/kokjohn0824/rag-slow
+- **Anomaly Service**: https://github.com/kokjohn0824/tempo-latency-anomaly-service
+- **Trace Demo**: https://github.com/kokjohn0824/tempo-otlp-trace-demo
+
+詳細資訊請參考 [GITHUB_REPOS.md](GITHUB_REPOS.md)
+
+---
+
 ## 主要文檔
 
 ### 📖 [README.md](README.md)
