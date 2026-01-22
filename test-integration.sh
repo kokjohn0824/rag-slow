@@ -18,8 +18,8 @@ echo -e "${BLUE}========================================${NC}"
 echo ""
 
 # 配置
-ANOMALY_SERVICE="http://localhost:8081"
-TRACE_DEMO_SERVICE="http://localhost:8080"
+ANOMALY_SERVICE="http://192.168.4.208:3201"
+TRACE_DEMO_SERVICE="http://192.168.4.208:3202"
 
 # 步驟 1: 檢查可用的 endpoints
 echo -e "${GREEN}步驟 1: 從 Anomaly Service 檢查可用的 endpoints${NC}"
@@ -32,29 +32,29 @@ echo ""
 TOTAL_ENDPOINTS=$(echo "$AVAILABLE" | jq -r '.totalEndpoints')
 
 if [ "$TOTAL_ENDPOINTS" -eq 0 ]; then
-    echo -e "${YELLOW}警告: 沒有可用的 endpoints，需要先產生測試資料${NC}"
-    echo ""
-    echo -e "${GREEN}產生測試 traces...${NC}"
-    for i in {1..10}; do
-        curl -s -X POST "${TRACE_DEMO_SERVICE}/api/order/create" \
-            -H "Content-Type: application/json" \
-            -d '{"user_id":"user_'$i'","product_id":"prod_123","quantity":1,"price":99.99}' > /dev/null
-        echo "  產生 trace $i/10"
-        sleep 2
-    done
-    echo ""
-    echo "等待 10 分鐘讓系統收集和處理資料..."
-    echo "（這是正常的，系統需要時間建立 baseline）"
-    sleep 600
-    
-    # 重新檢查
-    AVAILABLE=$(curl -s "${ANOMALY_SERVICE}/v1/available")
-    TOTAL_ENDPOINTS=$(echo "$AVAILABLE" | jq -r '.totalEndpoints')
-    
-    if [ "$TOTAL_ENDPOINTS" -eq 0 ]; then
-        echo -e "${YELLOW}仍然沒有可用的 endpoints，請稍後再試${NC}"
-        exit 1
-    fi
+  echo -e "${YELLOW}警告: 沒有可用的 endpoints，需要先產生測試資料${NC}"
+  echo ""
+  echo -e "${GREEN}產生測試 traces...${NC}"
+  for i in {1..10}; do
+    curl -s -X POST "${TRACE_DEMO_SERVICE}/api/order/create" \
+      -H "Content-Type: application/json" \
+      -d '{"user_id":"user_'$i'","product_id":"prod_123","quantity":1,"price":99.99}' >/dev/null
+    echo "  產生 trace $i/10"
+    sleep 2
+  done
+  echo ""
+  echo "等待 10 分鐘讓系統收集和處理資料..."
+  echo "（這是正常的，系統需要時間建立 baseline）"
+  sleep 60
+
+  # 重新檢查
+  AVAILABLE=$(curl -s "${ANOMALY_SERVICE}/v1/available")
+  TOTAL_ENDPOINTS=$(echo "$AVAILABLE" | jq -r '.totalEndpoints')
+
+  if [ "$TOTAL_ENDPOINTS" -eq 0 ]; then
+    echo -e "${YELLOW}仍然沒有可用的 endpoints，請稍後再試${NC}"
+    exit 1
+  fi
 fi
 
 # 選擇第一個可用的 endpoint
@@ -71,19 +71,19 @@ echo -e "${GREEN}步驟 2: 產生該 endpoint 的測試 trace${NC}"
 echo "呼叫 $ENDPOINT_NAME..."
 
 if [[ "$ENDPOINT_NAME" == *"order/create"* ]]; then
-    RESPONSE=$(curl -s -X POST "${TRACE_DEMO_SERVICE}/api/order/create" \
-        -H "Content-Type: application/json" \
-        -d '{"user_id":"test_user","product_id":"prod_123","quantity":2,"price":199.99}')
+  RESPONSE=$(curl -s -X POST "${TRACE_DEMO_SERVICE}/api/order/create" \
+    -H "Content-Type: application/json" \
+    -d '{"user_id":"test_user","product_id":"prod_123","quantity":2,"price":199.99}')
 elif [[ "$ENDPOINT_NAME" == *"user/profile"* ]]; then
-    RESPONSE=$(curl -s "${TRACE_DEMO_SERVICE}/api/user/profile?user_id=test_user")
+  RESPONSE=$(curl -s "${TRACE_DEMO_SERVICE}/api/user/profile?user_id=test_user")
 elif [[ "$ENDPOINT_NAME" == *"report/generate"* ]]; then
-    RESPONSE=$(curl -s -X POST "${TRACE_DEMO_SERVICE}/api/report/generate" \
-        -H "Content-Type: application/json" \
-        -d '{"report_type":"sales"}')
+  RESPONSE=$(curl -s -X POST "${TRACE_DEMO_SERVICE}/api/report/generate" \
+    -H "Content-Type: application/json" \
+    -d '{"report_type":"sales"}')
 else
-    RESPONSE=$(curl -s -X POST "${TRACE_DEMO_SERVICE}/api/order/create" \
-        -H "Content-Type: application/json" \
-        -d '{"user_id":"test_user","product_id":"prod_123","quantity":2,"price":199.99}')
+  RESPONSE=$(curl -s -X POST "${TRACE_DEMO_SERVICE}/api/order/create" \
+    -H "Content-Type: application/json" \
+    -d '{"user_id":"test_user","product_id":"prod_123","quantity":2,"price":199.99}')
 fi
 
 echo "Response: $RESPONSE"
@@ -118,8 +118,8 @@ echo ""
 TRACE_ID=$(echo "$TRACE_LOOKUP_RESULT" | jq -r '.traces[0].traceID')
 
 if [ -z "$TRACE_ID" ] || [ "$TRACE_ID" == "null" ]; then
-    echo -e "${YELLOW}錯誤: 找不到該 endpoint 的 traces${NC}"
-    exit 1
+  echo -e "${YELLOW}錯誤: 找不到該 endpoint 的 traces${NC}"
+  exit 1
 fi
 
 echo "找到 Trace ID: $TRACE_ID"
@@ -232,16 +232,16 @@ echo "..."
 echo ""
 
 # 總結
-echo -e "${BLUE}========================================${NC}"
-echo -e "${BLUE}測試完成${NC}"
-echo -e "${BLUE}========================================${NC}"
-echo ""
-echo "✅ 成功從 Anomaly Service 獲取 longest span"
-echo "✅ 成功從 Anomaly Service 獲取 child spans"
-echo "✅ 成功從 Source Code API 獲取原始碼"
-echo "✅ 可以識別效能瓶頸 (最慢的子操作)"
-echo ""
-echo "架構改進完成："
-echo "  - Anomaly Service 負責所有 Tempo 查詢和 trace 分析"
-echo "  - Trace Demo 只負責 span name → 原始碼的映射"
-echo "  - 職責清晰，易於維護"
+# echo -e "${BLUE}========================================${NC}"
+# echo -e "${BLUE}測試完成${NC}"
+# echo -e "${BLUE}========================================${NC}"
+# echo ""
+# echo "✅ 成功從 Anomaly Service 獲取 longest span"
+# echo "✅ 成功從 Anomaly Service 獲取 child spans"
+# echo "✅ 成功從 Source Code API 獲取原始碼"
+# echo "✅ 可以識別效能瓶頸 (最慢的子操作)"
+# echo ""
+# echo "架構改進完成："
+# echo "  - Anomaly Service 負責所有 Tempo 查詢和 trace 分析"
+# echo "  - Trace Demo 只負責 span name → 原始碼的映射"
+# echo "  - 職責清晰，易於維護"
