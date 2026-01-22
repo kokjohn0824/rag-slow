@@ -1,0 +1,1300 @@
+app:
+  description: 慢速告警根因分析工作流 - 從告警信自動化完成 RCA
+  icon: 🤖
+  icon_background: '#E4FBCC'
+  mode: workflow
+  name: Slow-RCA-慢速告警根因分析
+  use_icon_as_answer_icon: false
+dependencies:
+- current_identifier: null
+  type: marketplace
+  value:
+    marketplace_plugin_unique_identifier: langgenius/openai_api_compatible:0.0.27@f9ce3ff5e28f09931a3a7fca59add2d09590408f7e9a3d701b10c77a60249719
+    version: null
+kind: app
+version: 0.5.0
+workflow:
+  conversation_variables: []
+  environment_variables:
+  - description: 開發環境 API 基礎 URL
+    id: env-dev-domain
+    name: DEV_DOMAIN
+    selector:
+    - env
+    - DEV_DOMAIN
+    value: http://192.168.4.208
+    value_type: string
+  - description: Tempo API 基礎 URL (tempo-latency-anomaly-service)
+    id: env-tempo-url
+    name: TEMPO_API_URL
+    selector:
+    - env
+    - TEMPO_API_URL
+    value: http://localhost:8081
+    value_type: string
+  - description: RAG API 基礎 URL (tempo-otlp-trace-demo)
+    id: env-rag-url
+    name: RAG_API_URL
+    selector:
+    - env
+    - RAG_API_URL
+    value: http://localhost:8080
+    value_type: string
+  - description: 拓撲 API 基礎 URL (未實作)
+    id: env-topology-url
+    name: TOPOLOGY_API_URL
+    selector:
+    - env
+    - TOPOLOGY_API_URL
+    value: http://topology.example.com
+    value_type: string
+  - description: SNMP/Metrics API 基礎 URL (未實作)
+    id: env-snmp-url
+    name: SNMP_API_URL
+    selector:
+    - env
+    - SNMP_API_URL
+    value: http://metrics.example.com
+    value_type: string
+  features:
+    file_upload:
+      allowed_file_extensions:
+      - .JPG
+      - .JPEG
+      - .PNG
+      - .GIF
+      - .WEBP
+      - .SVG
+      allowed_file_types:
+      - image
+      allowed_file_upload_methods:
+      - local_file
+      - remote_url
+      enabled: false
+      fileUploadConfig:
+        audio_file_size_limit: 50
+        batch_count_limit: 5
+        file_size_limit: 15
+        image_file_batch_limit: 10
+        image_file_size_limit: 10
+        single_chunk_attachment_limit: 10
+        video_file_size_limit: 100
+        workflow_file_upload_limit: 10
+      image:
+        enabled: false
+        number_limits: 3
+        transfer_methods:
+        - local_file
+        - remote_url
+      number_limits: 3
+    opening_statement: ''
+    retriever_resource:
+      enabled: true
+    sensitive_word_avoidance:
+      enabled: false
+    speech_to_text:
+      enabled: false
+    suggested_questions: []
+    suggested_questions_after_answer:
+      enabled: false
+    text_to_speech:
+      enabled: false
+      language: ''
+      voice: ''
+  graph:
+    edges:
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: start
+        targetType: llm
+      id: start-to-parse-alert
+      selected: false
+      source: node-start
+      sourceHandle: source
+      target: node-parse-alert
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: code
+      id: parse-alert-to-parse-time
+      selected: false
+      source: node-parse-alert
+      sourceHandle: source
+      target: node-parse-time
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: code
+        targetType: http-request
+      id: parse-time-to-tempo-search
+      selected: false
+      source: node-parse-time
+      sourceHandle: source
+      target: node-tempo-search
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: http-request
+        targetType: code
+      id: tempo-search-to-judge-anomaly
+      selected: false
+      source: node-tempo-search
+      sourceHandle: source
+      target: node-judge-anomaly
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: code
+        targetType: http-request
+      id: judge-anomaly-to-trace-detail
+      selected: false
+      source: node-judge-anomaly
+      sourceHandle: source
+      target: node-trace-detail
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: http-request
+        targetType: code
+      id: trace-detail-to-critical-path
+      selected: false
+      source: node-trace-detail
+      sourceHandle: source
+      target: node-critical-path
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: code
+        targetType: http-request
+      id: critical-path-to-rag-search
+      selected: false
+      source: node-critical-path
+      sourceHandle: source
+      target: node-rag-search
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: http-request
+        targetType: llm
+      id: rag-search-to-rca
+      selected: false
+      source: node-rag-search
+      sourceHandle: source
+      target: node-rca
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    - data:
+        isInIteration: false
+        isInLoop: false
+        sourceType: llm
+        targetType: end
+      id: rca-to-end
+      selected: false
+      source: node-rca
+      sourceHandle: source
+      target: node-end
+      targetHandle: target
+      type: custom
+      zIndex: 0
+    nodes:
+    - data:
+        selected: false
+        title: 開始
+        type: start
+        variables:
+        - default: ''
+          hint: 請輸入告警信內容
+          label: 告警信內容
+          max_length: 5000
+          options: []
+          placeholder: 貼上告警信全文...
+          required: true
+          type: paragraph
+          variable: targetLog
+      height: 109
+      id: node-start
+      position:
+        x: -190
+        y: 337.5
+      positionAbsolute:
+        x: -190
+        y: 337.5
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        model:
+          completion_params:
+            temperature: 0.3
+          mode: chat
+          name: /Users/chtadmin/mlx/models/Qwen2.5-14B-Instruct-bf16
+          provider: langgenius/openai_api_compatible/openai_api_compatible
+        prompt_template:
+        - id: system-parse-alert
+          role: system
+          text: '你是一個告警事件解析引擎，專門負責將原始告警信內容解析為結構化資料。
+
+
+            你的任務僅限於「解析與整理」，不得進行原因推論、解決建議或分析判斷。
+
+
+            所有輸出必須為 JSON 格式，不得輸出任何說明文字。
+
+
+            ## 解析規則
+
+            1. 若欄位不存在，請填入 null
+
+            2. 保留原始文字，不要自行翻譯或改寫內容
+
+            3. 時間請維持原始格式
+
+            4. 僅輸出 JSON，不得有任何額外說明
+
+            5. user_symptom 必須是以下之一: slow, timeout, lag, error, intermittent, unknown
+
+            '
+        - id: user-parse-alert
+          role: user
+          text: "請解析以下告警信內容，並依指定欄位輸出結構化 JSON。\n\n告警信內容：\n{{#node-start.targetLog#}}\n\
+            \n輸出欄位結構如下：\n{\n  \"event\": string,\n  \"device\": string,\n  \"host\"\
+            : string,\n  \"env\": string,\n  \"service_name\": string,\n  \"time_stamp\"\
+            : string,\n  \"url\": string,\n  \"domain\": string,\n  \"port\": number\
+            \ | null,\n  \"api_path\": string,\n  \"http_method\": string | null,\n\
+            \  \"user_symptom\": string\n}\n"
+        selected: false
+        structured_output:
+          schema:
+            additionalProperties: false
+            properties:
+              api_path:
+                type: string
+              device:
+                type: string
+              domain:
+                type: string
+              env:
+                type: string
+              event:
+                type: string
+              host:
+                type: string
+              http_method:
+                type: string
+              port:
+                type: number
+              service_name:
+                type: string
+              time_stamp:
+                type: string
+              url:
+                type: string
+              user_symptom:
+                type: string
+            required:
+            - time_stamp
+            - user_symptom
+            type: object
+        structured_output_enabled: true
+        title: 解析告警信
+        type: llm
+        vision:
+          enabled: false
+      height: 88
+      id: node-parse-alert
+      position:
+        x: 100
+        y: 358.5
+      positionAbsolute:
+        x: 100
+        y: 358.5
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        code: "from datetime import datetime, timedelta\nfrom zoneinfo import ZoneInfo\n\
+          \ndef main(event_timestamp: str):\n    \"\"\"\n    將本地時間轉換為 UTC 時間範圍\n \
+          \   預設時區: Asia/Taipei\n    時間窗口: t-15m ~ t\n    \"\"\"\n    start, end,\
+          \ start_unix, end_unix = local_to_utc_iso_z_range(\n        event_timestamp,\n\
+          \        \"Asia/Taipei\",\n        delta_minutes=15,\n    )\n    return {\n\
+          \        \"start\": start,\n        \"end\": end,\n        \"start_unix\"\
+          : start_unix,\n        \"end_unix\": end_unix,\n    }\n\ndef local_to_utc_iso_z_range(\n\
+          \    ts: str,\n    tz_name: str,\n    delta_minutes: int,\n) -> tuple[str,\
+          \ str, int, int]:\n    local_tz = ZoneInfo(tz_name)\n\n    # 嘗試多種時間格式\n\
+          \    formats = [\n        \"%Y-%m-%d %H:%M:%S\",\n        \"%Y/%m/%d %H:%M:%S\"\
+          ,\n        \"%Y-%m-%dT%H:%M:%S\",\n        \"%Y/%m/%d %H:%M\",\n    ]\n \
+          \   \n    local_dt = None\n    for fmt in formats:\n        try:\n      \
+          \      local_dt = datetime.strptime(ts, fmt).replace(tzinfo=local_tz)\n \
+          \           break\n        except ValueError:\n            continue\n   \
+          \ \n    if local_dt is None:\n        # 如果都解析失敗，使用當前時間\n        local_dt = datetime.now(local_tz)\n\
+          \n    # 計算時間範圍\n    start_local = local_dt - timedelta(minutes=delta_minutes)\n\
+          \    end_local = local_dt\n\n    # 轉換為 UTC\n    start_utc = start_local.astimezone(ZoneInfo(\"\
+          UTC\"))\n    end_utc = end_local.astimezone(ZoneInfo(\"UTC\"))\n\n    fmt_out\
+          \ = \"%Y-%m-%dT%H:%M:%SZ\"\n    return (\n        start_utc.strftime(fmt_out),\n\
+          \        end_utc.strftime(fmt_out),\n        int(start_utc.timestamp()),\n\
+          \        int(end_utc.timestamp())\n    )\n"
+        code_language: python3
+        outputs:
+          end:
+            children: null
+            type: string
+          end_unix:
+            children: null
+            type: number
+          start:
+            children: null
+            type: string
+          start_unix:
+            children: null
+            type: number
+        selected: false
+        title: 解析時間軸
+        type: code
+        variables:
+        - value_selector:
+          - node-parse-alert
+          - structured_output
+          - time_stamp
+          value_type: string
+          variable: event_timestamp
+      height: 52
+      id: node-parse-time
+      position:
+        x: 392.5
+        y: 358.5
+      positionAbsolute:
+        x: 392.5
+        y: 358.5
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        authorization:
+          config: null
+          type: no-auth
+        body:
+          data:
+          - id: mapping-body
+            key: ''
+            type: text
+            value: "{\n  \"timestamp\": \"{{#node-parse-time.end#}}\",\n  \"env\"\
+              : \"{{#node-parse-alert.structured_output.env#}}\",\n  \"domain\": \"\
+              {{#node-parse-alert.structured_output.domain#}}\",\n  \"port\": {{#node-parse-alert.structured_output.port#}},\n\
+              \  \"api_path\": \"{{#node-parse-alert.structured_output.api_path#}}\"\
+              ,\n  \"url\": \"{{#node-parse-alert.structured_output.url#}}\"\n}\n"
+          type: raw-text
+        headers: 'Content-Type:application/json
+
+          accept:application/json'
+        method: post
+        params: ''
+        retry_config:
+          max_retries: 3
+          retry_enabled: true
+          retry_interval: 100
+        selected: false
+        ssl_verify: false
+        timeout:
+          max_connect_timeout: 10
+          max_read_timeout: 30
+          max_write_timeout: 10
+        title: 查詢服務映射 (已停用 - 直接使用告警信 service_name)
+        type: http-request
+        url: '{{#env.DEV_DOMAIN#}}:8000/api/service-mapping'
+        variables: []
+      height: 141
+      id: node-mapping-api
+      position:
+        x: 578.75
+        y: 489.74999999999994
+      positionAbsolute:
+        x: 578.75
+        y: 489.74999999999994
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        code: "import json\n\ndef main(body: str):\n    \"\"\"\n    解析服務映射 API 回應\n\
+          \    提取 rootServiceName, version, owner_team 等資訊\n    \"\"\"\n    try:\n\
+          \        data = json.loads(body)\n    except:\n        return {\n      \
+          \      \"rootServiceName\": \"\",\n            \"service_name\": \"\",\n\
+          \            \"version\": \"\",\n            \"owner_team\": \"\",\n   \
+          \         \"confidence\": 0,\n            \"error\": \"Failed to parse mapping\
+          \ response\"\n        }\n    \n    # 處理可能的回應格式\n    if \"candidates\" in\
+          \ data and len(data[\"candidates\"]) > 0:\n        candidate = data[\"candidates\"\
+          ][0]\n        return {\n            \"rootServiceName\": candidate.get(\"\
+          rootServiceName\", \"\"),\n            \"service_name\": candidate.get(\"\
+          service_name\", \"\"),\n            \"version\": candidate.get(\"version\"\
+          , \"\"),\n            \"owner_team\": candidate.get(\"owner_team\", \"\"\
+          ),\n            \"confidence\": data.get(\"confidence\", 0),\n         \
+          \   \"error\": \"\"\n        }\n    \n    # 直接回應格式\n    return {\n     \
+          \   \"rootServiceName\": data.get(\"rootServiceName\", data.get(\"service_name\"\
+          , \"\")),\n        \"service_name\": data.get(\"service_name\", \"\"),\n\
+          \        \"version\": data.get(\"version\", \"\"),\n        \"owner_team\"\
+          : data.get(\"owner_team\", \"\"),\n        \"confidence\": data.get(\"confidence\"\
+          , 0.5),\n        \"error\": \"\"\n    }\n"
+        code_language: python3
+        outputs:
+          confidence:
+            children: null
+            type: number
+          error:
+            children: null
+            type: string
+          owner_team:
+            children: null
+            type: string
+          rootServiceName:
+            children: null
+            type: string
+          service_name:
+            children: null
+            type: string
+          version:
+            children: null
+            type: string
+        selected: false
+        title: 解析映射結果 (已停用)
+        type: code
+        variables:
+        - value_selector:
+          - node-mapping-api
+          - body
+          value_type: string
+          variable: body
+      height: 52
+      id: node-parse-mapping
+      position:
+        x: 752.5
+        y: 358.5
+      positionAbsolute:
+        x: 752.5
+        y: 358.5
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        authorization:
+          config: null
+          type: no-auth
+        body:
+          data: []
+          type: none
+        headers: 'accept:application/json'
+        method: get
+        params: 'service={{#node-parse-alert.structured_output.service_name#}}&endpoint={{#node-parse-alert.structured_output.api_path#}}&start={{#node-parse-time.start_unix#}}&end={{#node-parse-time.end_unix#}}&limit=5'
+        retry_config:
+          max_retries: 3
+          retry_enabled: true
+          retry_interval: 100
+        selected: false
+        ssl_verify: false
+        timeout:
+          max_connect_timeout: 10
+          max_read_timeout: 60
+          max_write_timeout: 10
+        title: 搜尋慢 Traces
+        type: http-request
+        url: '{{#env.TEMPO_API_URL#}}/v1/traces'
+        variables: []
+      height: 141
+      id: node-tempo-search
+      position:
+        x: 946.25
+        y: 489.74999999999994
+      positionAbsolute:
+        x: 946.25
+        y: 489.74999999999994
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        code: "import json\n\ndef main(body: str):\n    \"\"\"\n    判斷是否存在異常慢的 traces\n\
+          \    並選出 top trace 供後續分析\n    處理新的 API 格式: { service, endpoint, traces:\
+          \ [{ traceId, durationMs, ... }] }\n    \"\"\"\n    try:\n        data =\
+          \ json.loads(body)\n    except:\n        return {\n            \"is_anomalous\"\
+          : False,\n            \"top_trace_id\": \"\",\n            \"top_trace_duration_ms\"\
+          : 0,\n            \"slow_trace_count\": 0,\n            \"baseline_p95_ms\"\
+          : 0,\n            \"evidence_summary\": \"無法解析 Tempo 回應\"\n        }\n \
+          \   \n    traces = data.get(\"traces\", [])\n    \n    if not traces:\n \
+          \       return {\n            \"is_anomalous\": False,\n            \"top_trace_id\"\
+          : \"\",\n            \"top_trace_duration_ms\": 0,\n            \"slow_trace_count\"\
+          : 0,\n            \"baseline_p95_ms\": 0,\n            \"evidence_summary\"\
+          : \"未找到 traces\"\n        }\n    \n    # 取最慢的 trace (新格式使用 durationMs)\n\
+          \    top_trace = max(traces, key=lambda t: t.get(\"durationMs\", t.get(\"\
+          duration_ms\", 0)))\n    top_duration = top_trace.get(\"durationMs\", top_trace.get(\"\
+          duration_ms\", 0))\n    \n    # 計算 baseline (簡單取所有 traces 的 p95)\n   \
+          \ durations = [t.get(\"durationMs\", t.get(\"duration_ms\", 0)) for t in\
+          \ traces]\n    durations.sort()\n    p95_index = int(len(durations) * 0.95)\n\
+          \    baseline_p95 = durations[p95_index] if p95_index < len(durations) else\
+          \ durations[-1] if durations else 1000\n    \n    # 判斷是否異常: top trace duration\
+          \ > baseline p95 * 1.5\n    is_anomalous = top_duration > baseline_p95 *\
+          \ 1.5 if baseline_p95 > 0 else len(traces) > 0\n    \n    return {\n   \
+          \     \"is_anomalous\": is_anomalous,\n        \"top_trace_id\": top_trace.get(\"\
+          traceId\", \"\"),\n        \"top_trace_duration_ms\": top_duration,\n   \
+          \     \"slow_trace_count\": len(traces),\n        \"baseline_p95_ms\": baseline_p95,\n\
+          \        \"evidence_summary\": f\"找到 {len(traces)} 條 traces，最慢 {top_duration}ms，baseline\
+          \ p95 {baseline_p95}ms\"\n    }\n"
+        code_language: python3
+        outputs:
+          baseline_p95_ms:
+            children: null
+            type: number
+          evidence_summary:
+            children: null
+            type: string
+          is_anomalous:
+            children: null
+            type: string
+          slow_trace_count:
+            children: null
+            type: number
+          top_trace_duration_ms:
+            children: null
+            type: number
+          top_trace_id:
+            children: null
+            type: string
+        selected: false
+        title: 判斷異常狀態
+        type: code
+        variables:
+        - value_selector:
+          - node-tempo-search
+          - body
+          value_type: string
+          variable: body
+      height: 52
+      id: node-judge-anomaly
+      position:
+        x: 1117.5
+        y: 358.5
+      positionAbsolute:
+        x: 1117.5
+        y: 358.5
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        authorization:
+          config: null
+          type: no-auth
+        body:
+          data: []
+          type: none
+        headers: 'accept:application/json'
+        method: get
+        params: ''
+        retry_config:
+          max_retries: 3
+          retry_enabled: true
+          retry_interval: 100
+        selected: false
+        ssl_verify: false
+        timeout:
+          max_connect_timeout: 10
+          max_read_timeout: 60
+          max_write_timeout: 10
+        title: 取得 Trace 詳情
+        type: http-request
+        url: '{{#env.TEMPO_API_URL#}}/v1/traces/{{#node-judge-anomaly.top_trace_id#}}/longest-span'
+        variables: []
+      height: 141
+      id: node-trace-detail
+      position:
+        x: 1281.25
+        y: 489.74999999999994
+      positionAbsolute:
+        x: 1281.25
+        y: 489.74999999999994
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        code: "import json\n\ndef main(body: str, total_duration_ms: int):\n    \"\
+          \"\"\n    分析 trace 詳情，找出 critical path 和嫌疑點\n    處理新格式: { traceId,\
+          \ longestSpan: { spanId, name, service, durationMs, ... } }\n    \"\"\"\n\
+          \    try:\n        data = json.loads(body)\n    except:\n        return\
+          \ {\n            \"suspects_json\": \"[]\",\n            \"top_suspect_service\"\
+          : \"\",\n            \"top_suspect_operation\": \"\",\n            \"top_suspect_duration_ms\"\
+          : 0,\n            \"top_suspect_type\": \"unknown\",\n            \"critical_path_summary\"\
+          : \"無法解析 trace 詳情\"\n        }\n    \n    # 處理新格式: longestSpan\n    longest_span\
+          \ = data.get(\"longestSpan\", {})\n    \n    # 也支援舊格式: suspects 陣列\n    suspects\
+          \ = data.get(\"suspects\", [])\n    \n    # 如果有 longestSpan，將其轉換為 suspects\
+          \ 格式\n    if longest_span and not suspects:\n        span_duration = longest_span.get(\"\
+          durationMs\", 0)\n        pct_of_trace = (span_duration / total_duration_ms\
+          \ * 100) if total_duration_ms > 0 else 0\n        \n        suspects = [{\n\
+          \            \"spanId\": longest_span.get(\"spanId\", \"\"),\n         \
+          \   \"service\": longest_span.get(\"service\", longest_span.get(\"serviceName\"\
+          , \"\")),\n            \"operation\": longest_span.get(\"name\", longest_span.get(\"\
+          operationName\", \"\")),\n            \"duration_ms\": span_duration,\n \
+          \           \"pct_of_trace\": pct_of_trace,\n            \"suspect_type\"\
+          : \"longest_span\"\n        }]\n    \n    if not suspects:\n        return\
+          \ {\n            \"suspects_json\": \"[]\",\n            \"top_suspect_service\"\
+          : \"\",\n            \"top_suspect_operation\": \"\",\n            \"top_suspect_duration_ms\"\
+          : 0,\n            \"top_suspect_type\": \"unknown\",\n            \"critical_path_summary\"\
+          : \"未找到嫌疑點\"\n        }\n    \n    # 取 top suspect\n    top = suspects[0]\n\
+          \    \n    # 構建摘要\n    summary_parts = []\n    for s in suspects[:3]:\n\
+          \        pct = s.get(\"pct_of_trace\", 0)\n        summary_parts.append(f\"\
+          {s.get('operation', 'unknown')} ({pct:.1f}%)\")\n    \n    return {\n  \
+          \      \"suspects_json\": json.dumps(suspects, ensure_ascii=False),\n  \
+          \      \"top_suspect_service\": top.get(\"service\", \"\"),\n        \"\
+          top_suspect_operation\": top.get(\"operation\", \"\"),\n        \"top_suspect_duration_ms\"\
+          : top.get(\"duration_ms\", 0),\n        \"top_suspect_type\": top.get(\"\
+          suspect_type\", \"unknown\"),\n        \"critical_path_summary\": \" → \"\
+          .join(summary_parts) if summary_parts else \"無可用摘要\"\n    }\n"
+        code_language: python3
+        outputs:
+          critical_path_summary:
+            children: null
+            type: string
+          suspects_json:
+            children: null
+            type: string
+          top_suspect_duration_ms:
+            children: null
+            type: number
+          top_suspect_operation:
+            children: null
+            type: string
+          top_suspect_service:
+            children: null
+            type: string
+          top_suspect_type:
+            children: null
+            type: string
+        selected: false
+        title: 分析 Critical Path
+        type: code
+        variables:
+        - value_selector:
+          - node-trace-detail
+          - body
+          value_type: string
+          variable: body
+        - value_selector:
+          - node-judge-anomaly
+          - top_trace_duration_ms
+          value_type: number
+          variable: total_duration_ms
+      height: 52
+      id: node-critical-path
+      position:
+        x: 1451.25
+        y: 358.5
+      positionAbsolute:
+        x: 1451.25
+        y: 358.5
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        authorization:
+          config: null
+          type: no-auth
+        body:
+          data:
+          - id: topology-body
+            key: ''
+            type: text
+            value: "{\n  \"service\": \"{{#node-parse-mapping.rootServiceName#}}\"\
+              ,\n  \"env\": \"{{#node-parse-alert.structured_output.env#}}\",\n  \"\
+              timestamp\": \"{{#node-parse-time.end#}}\",\n  \"depth\": 1\n}\n"
+          type: raw-text
+        headers: 'Content-Type:application/json
+
+          accept:application/json'
+        method: post
+        params: ''
+        retry_config:
+          max_retries: 3
+          retry_enabled: true
+          retry_interval: 100
+        selected: false
+        ssl_verify: false
+        timeout:
+          max_connect_timeout: 10
+          max_read_timeout: 30
+          max_write_timeout: 10
+        title: 查詢服務拓撲 (未實作)
+        type: http-request
+        url: '{{#env.TOPOLOGY_API_URL#}}/api/topology/dependencies'
+        variables: []
+      height: 141
+      id: node-topology-api
+      position:
+        x: 1537.5
+        y: 200
+      positionAbsolute:
+        x: 1537.5
+        y: 200
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        authorization:
+          config: null
+          type: no-auth
+        body:
+          data:
+          - id: snmp-body
+            key: ''
+            type: text
+            value: "{\n  \"service\": \"{{#node-parse-mapping.rootServiceName#}}\"\
+              ,\n  \"env\": \"{{#node-parse-alert.structured_output.env#}}\",\n  \"\
+              start_time\": \"{{#node-parse-time.start#}}\",\n  \"end_time\": \"\
+              {{#node-parse-time.end#}}\",\n  \"metrics\": [\"cpu_usage\", \"memory_usage\"\
+              , \"network_io\", \"disk_io\"],\n  \"include_baseline\": true\n}\n"
+          type: raw-text
+        headers: 'Content-Type:application/json
+
+          accept:application/json'
+        method: post
+        params: ''
+        retry_config:
+          max_retries: 3
+          retry_enabled: true
+          retry_interval: 100
+        selected: false
+        ssl_verify: false
+        timeout:
+          max_connect_timeout: 10
+          max_read_timeout: 30
+          max_write_timeout: 10
+        title: 查詢 SNMP/Metrics (未實作)
+        type: http-request
+        url: '{{#env.SNMP_API_URL#}}/api/metrics/query'
+        variables: []
+      height: 141
+      id: node-snmp-api
+      position:
+        x: 1537.5
+        y: 580
+      positionAbsolute:
+        x: 1537.5
+        y: 580
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        code: "import json\n\ndef main(topology_body: str, snmp_body: str):\n    \"\
+          \"\"\n    整合拓撲與 SNMP/Metrics 證據\n    \"\"\"\n    # 解析 topology API\
+          \ 回應\n    try:\n        topology_data = json.loads(topology_body)\n   \
+          \ except:\n        topology_data = {\n            \"error\": \"Failed to\
+          \ parse topology response\",\n            \"dependencies_1hop\": [],\n \
+          \           \"call_paths\": []\n        }\n    \n    # 解析 SNMP/Metrics\
+          \ API 回應\n    try:\n        snmp_data = json.loads(snmp_body)\n    except:\n\
+          \        snmp_data = {\n            \"error\": \"Failed to parse SNMP response\"\
+          ,\n            \"signals\": [],\n            \"infra_suspect\": []\n   \
+          \     }\n    \n    # 構建拓撲上下文\n    topology_context = {\n        \"\
+          root_service\": topology_data.get(\"service\", \"\"),\n        \"dependencies_1hop\"\
+          : topology_data.get(\"dependencies\", []),\n        \"call_paths\": topology_data.get(\"\
+          call_paths\", [])\n    }\n    \n    # 構建 SNMP 證據\n    snmp_evidence\
+          \ = {\n        \"time_window\": snmp_data.get(\"time_window\", {}),\n  \
+          \      \"baseline_window\": snmp_data.get(\"baseline_window\", {}),\n  \
+          \      \"signals\": snmp_data.get(\"metrics\", []),\n        \"infra_suspect\"\
+          : snmp_data.get(\"anomalies\", [])\n    }\n    \n    # 整合結果\n    combined\
+          \ = {\n        \"topology_context\": topology_context,\n        \"snmp_evidence\"\
+          : snmp_evidence\n    }\n    \n    return {\n        \"topology_context\"\
+          : json.dumps(topology_context, ensure_ascii=False),\n        \"snmp_evidence\"\
+          : json.dumps(snmp_evidence, ensure_ascii=False),\n        \"combined_json\"\
+          : json.dumps(combined, ensure_ascii=False)\n    }\n"
+        code_language: python3
+        outputs:
+          combined_json:
+            children: null
+            type: string
+          snmp_evidence:
+            children: null
+            type: string
+          topology_context:
+            children: null
+            type: string
+        selected: false
+        title: 整合基礎設施證據 (已停用)
+        type: code
+        variables:
+        - value_selector:
+          - node-topology-api
+          - body
+          value_type: string
+          variable: topology_body
+        - value_selector:
+          - node-snmp-api
+          - body
+          value_type: string
+          variable: snmp_body
+      height: 52
+      id: node-merge-infra-evidence
+      position:
+        x: 1830
+        y: 390
+      positionAbsolute:
+        x: 1830
+        y: 390
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        authorization:
+          config: null
+          type: no-auth
+        body:
+          data:
+          - id: rag-search-body
+            key: ''
+            type: text
+            value: "{\n  \"spanName\": \"{{#node-critical-path.top_suspect_operation#}}\"\
+              \n}\n"
+          type: raw-text
+        headers: 'Content-Type:application/json
+
+          accept:application/json'
+        method: post
+        params: ''
+        retry_config:
+          max_retries: 3
+          retry_enabled: true
+          retry_interval: 100
+        selected: false
+        ssl_verify: false
+        timeout:
+          max_connect_timeout: 10
+          max_read_timeout: 60
+          max_write_timeout: 10
+        title: RAG 搜尋原始碼
+        type: http-request
+        url: '{{#env.RAG_API_URL#}}/api/source-code'
+        variables: []
+      height: 141
+      id: node-rag-search
+      position:
+        x: 1737.5
+        y: 489.74999999999994
+      positionAbsolute:
+        x: 1737.5
+        y: 489.74999999999994
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        context:
+          enabled: false
+          variable_selector: []
+        model:
+          completion_params:
+            temperature: 0.5
+          mode: chat
+          name: /Users/chtadmin/mlx/models/Qwen2.5-14B-Instruct-bf16
+          provider: langgenius/openai_api_compatible/openai_api_compatible
+        prompt_template:
+        - id: system-rca
+          role: system
+          text: '你是一位資深的 SRE/AIOps 專家，專門撰寫根因分析 (RCA) 報告。
+
+
+            你的任務是：
+
+            1. 整合 tracing 證據、程式碼分析等多維度資訊
+
+            2. 提出有證據支持的根因假說
+
+            3. 為每個假說提供驗證方式
+
+            4. 生成可行的改善建議
+
+
+            ## 核心原則
+
+            1. **證據導向**：每個結論必須引用具體證據（traceId、span、code location）
+
+            2. **不硬猜**：資訊不足時明確列出「缺少的資訊」，不可虛構原因
+
+            3. **可驗證**：每個假說必須附帶驗證步驟
+
+            4. **可行動**：改善建議必須具體且可執行
+
+
+            ## 輸出格式
+
+            請使用 Markdown 格式輸出，包含以下章節：
+
+            1. 執行摘要
+
+            2. 證據鏈
+
+            3. 根因假說（含信心度）
+
+            4. 改善建議（短期/中期/長期）
+
+            5. 缺少的資訊
+
+            '
+        - id: user-rca
+          role: user
+          text: '請根據以下收集到的資料，進行根因分析並生成 RCA 報告。
+
+
+            ====================
+
+            【告警資訊】
+
+            ====================
+
+            - 事件時間: {{#node-parse-alert.structured_output.time_stamp#}}
+
+            - 環境: {{#node-parse-alert.structured_output.env#}}
+
+            - 服務名稱: {{#node-parse-alert.structured_output.service_name#}}
+
+            - 主機: {{#node-parse-alert.structured_output.host#}}
+
+            - URL: {{#node-parse-alert.structured_output.url#}}
+
+            - 症狀: {{#node-parse-alert.structured_output.user_symptom#}}
+
+
+            ====================
+
+            【Tempo 證據】
+
+            ====================
+
+            - 是否異常: {{#node-judge-anomaly.is_anomalous#}}
+
+            - 慢 Trace 數量: {{#node-judge-anomaly.slow_trace_count#}}
+
+            - 最慢 Trace ID: {{#node-judge-anomaly.top_trace_id#}}
+
+            - 最慢 Trace Duration: {{#node-judge-anomaly.top_trace_duration_ms#}} ms
+
+            - Baseline P95: {{#node-judge-anomaly.baseline_p95_ms#}} ms
+
+            - 證據摘要: {{#node-judge-anomaly.evidence_summary#}}
+
+
+            ====================
+
+            【慢點分析】
+
+            ====================
+
+            - Top 嫌疑服務: {{#node-critical-path.top_suspect_service#}}
+
+            - Top 嫌疑操作: {{#node-critical-path.top_suspect_operation#}}
+
+            - Top 嫌疑 Duration: {{#node-critical-path.top_suspect_duration_ms#}} ms
+
+            - Top 嫌疑類型: {{#node-critical-path.top_suspect_type#}}
+
+            - Critical Path 摘要: {{#node-critical-path.critical_path_summary#}}
+
+            - 完整嫌疑點列表: {{#node-critical-path.suspects_json#}}
+
+
+            ====================
+
+            【原始碼資訊】
+
+            ====================
+
+            {{#node-rag-search.body#}}
+
+
+            ====================
+
+
+            請依據上述資料，生成完整的 RCA 報告。
+
+            '
+        selected: false
+        structured_output_enabled: false
+        title: Root Cause Analysis
+        type: llm
+        vision:
+          enabled: false
+      height: 88
+      id: node-rca
+      position:
+        x: 1918.75
+        y: 358.5
+      positionAbsolute:
+        x: 1918.75
+        y: 358.5
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        outputs:
+        - value_selector:
+          - node-rca
+          - text
+          value_type: string
+          variable: result
+        selected: false
+        title: 輸出
+        type: end
+      height: 88
+      id: node-end
+      position:
+        x: 2248.75
+        y: 358.5
+      positionAbsolute:
+        x: 2248.75
+        y: 358.5
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom
+      width: 242
+    - data:
+        author: System
+        desc: ''
+        height: 216
+        selected: false
+        showAuthor: true
+        text: '{"root":{"children":[{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"範例告警信：","type":"text","version":1},{"type":"linebreak","version":1},{"detail":0,"format":0,"mode":"normal","style":"","text":"序號：20166775_20292200","type":"text","version":1},{"type":"linebreak","version":1},{"detail":0,"format":0,"mode":"normal","style":"","text":"告警狀態：告警中","type":"text","version":1},{"type":"linebreak","version":1},{"detail":0,"format":0,"mode":"normal","style":"","text":"事件等級：Critical","type":"text","version":1},{"type":"linebreak","version":1},{"detail":0,"format":0,"mode":"normal","style":"","text":"事件名稱：系統回應緩慢","type":"text","version":1},{"type":"linebreak","version":1},{"detail":0,"format":0,"mode":"normal","style":"","text":"服務名稱：order-service","type":"text","version":1},{"type":"linebreak","version":1},{"detail":0,"format":0,"mode":"normal","style":"","text":"監控URL：http://api.example.com/api/orders","type":"text","version":1},{"type":"linebreak","version":1},{"detail":0,"format":0,"mode":"normal","style":"","text":"環境資訊：PROD","type":"text","version":1},{"type":"linebreak","version":1},{"detail":0,"format":0,"mode":"normal","style":"","text":"事件發生時間：2026-01-16
+          14:30:00","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""}],"direction":null,"format":"","indent":0,"type":"root","version":1}}'
+        theme: blue
+        title: ''
+        type: ''
+        width: 535
+      height: 216
+      id: node-note-example
+      position:
+        x: -185
+        y: 75.00000000000001
+      positionAbsolute:
+        x: -185
+        y: 75.00000000000001
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom-note
+      width: 535
+    - data:
+        author: alexchang
+        desc: ''
+        height: 796
+        selected: false
+        showAuthor: true
+        text: '{"root":{"children":[{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"#
+          慢速告警 RCA 工作流 - 快速入門","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"---","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"##
+          🎯 一句話說明","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"**從告警信自動生成根因分析報告**
+          - 整合 Tempo Tracing + 服務映射 + RAG 原始碼檢索","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"---","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"##
+          🔄 流程架構（6 個階段）","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"```","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"告警信
+          → [A]解析 → [B]定位服務 → [C]查 Tempo → [D]找慢點 → [E]取程式碼 → [F]生成報告","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"```","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"|
+          階段 | 功能 | 節點類型 | 負責人 |","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"|------|------|----------|--------|","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"|
+          **A. 告警解析** | 解析告警信為結構化資料 | 🤖 LLM + 💻 Code | ✅ 已完成 |","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"|
+          **B. 服務映射** | URL → 服務名稱/版本 | 🌐 API + 💻 Code | ⚠️ **需開發 API** |","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"|
+          **C. Tempo 查詢** | 搜尋慢 traces | 🌐 API + 💻 Code | ⚠️ **需開發 API** |","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"|
+          **D. 慢點定位** | 分析 Critical Path | 🌐 API + 💻 Code | ⚠️ **需開發 API** |","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"|
+          **E. 原始碼檢索** | RAG 搜尋 code | 🌐 API | 🔵 可選 |","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"|
+          **F. RCA 報告** | 生成分析報告 | 🤖 LLM | ✅ 已完成 |","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"---","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"##
+          🚨 需要開發的 API（共 4 個）","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"###
+          🔴 優先級 1: Tempo API（核心功能）","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"|
+          API | Endpoint | 功能 | 輸入 | 輸出 |","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"|-----|----------|------|------|------|","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"|
+          **搜尋慢 Traces** | `POST /api/v1/search_slow_traces` | 找出指定服務的慢 traces | rootServiceName,
+          時間窗 | traces 列表 + baseline p95 |","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"|
+          **分析 Trace 詳情** | `POST /api/v1/analyze_trace` | 分析單一 trace 的慢點 | traceId
+          | suspects 列表（最耗時的 spans） |","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"**資料來源**:
+          Tempo（需封裝查詢邏輯 + Critical Path 分析）","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"---","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"###
+          🟡 優先級 2: 服務映射 API","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"|
+          API | Endpoint | 功能 | 輸入 | 輸出 |","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"|-----|----------|------|------|------|","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"|
+          **服務映射** | `POST /api/service-mapping` | URL → 服務名稱/版本 | domain, api_path,
+          timestamp | rootServiceName, version, owner_team |","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"**資料來源**:
+          Kubernetes Ingress / Service Mesh / 服務註冊中心","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"---","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"###
+          🔵 優先級 3: RAG 原始碼 API（可後補）","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"|
+          API | Endpoint | 功能 | 輸入 | 輸出 |","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"|-----|----------|------|------|------|","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"|
+          **RAG 搜尋** | `POST /api/code/search` | 檢索 method 的原始碼 | service, operation,
+          version | code snippet + file path |","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"**資料來源**:
+          RAG 向量庫 + Git Repository","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"---","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"##
+          📋 API 詳細規格範例","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"###
+          1️⃣ 搜尋慢 Traces API","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"```json","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"//
+          POST /api/v1/search_slow_traces","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"{","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"  \"rootServiceName\":
+          \"order-service\",","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"  \"start_time\":
+          \"2026-01-16T06:15:00Z\",","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"  \"end_time\":
+          \"2026-01-16T06:30:00Z\",","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"  \"min_duration_ms\":
+          1000,","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"  \"limit\":
+          5","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"}","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"//
+          Response","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"{","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"  \"traces\":
+          [","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"    {\"traceId\":
+          \"abc123\", \"duration_ms\": 32000}","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"  ],","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"  \"baseline\":
+          {\"p95_ms\": 1200}","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"}","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"```","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"###
+          2️⃣ 分析 Trace 詳情 API","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"```json","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"//
+          POST /api/v1/analyze_trace","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"{","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"  \"traceId\":
+          \"abc123def456\"","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"}","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"//
+          Response","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"{","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"  \"suspects\":
+          [","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"    {","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"      \"spanId\":
+          \"span_001\",","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"      \"service\":
+          \"order-service\",","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"      \"operation\":
+          \"OrderRepository.createOrder\",","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"      \"duration_ms\":
+          28000,","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"      \"pct_of_trace\":
+          86.3,","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"      \"suspect_type\":
+          \"db\"","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"    }","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"  ]","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"}","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"```","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"###
+          3️⃣ 服務映射 API","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"```json","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"//
+          POST /api/service-mapping","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"{","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"  \"timestamp\":
+          \"2026-01-16T06:30:00Z\",","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"  \"env\":
+          \"prod\",","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"  \"domain\":
+          \"api.example.com\",","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"  \"api_path\":
+          \"/api/orders\"","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"}","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"//
+          Response","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"{","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"  \"confidence\":
+          0.95,","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"  \"candidates\":
+          [{","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"    \"rootServiceName\":
+          \"order-service\",","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"    \"version\":
+          \"v2.3.1-abc1234\",","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"    \"owner_team\":
+          \"order-team\"","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"  }]","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"}","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"```","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"---","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"##
+          👥 分工建議","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"|
+          任務 | 工作量 | 技術要求 | 建議負責人 |","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"|------|--------|----------|------------|","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"|
+          **Tempo Search API** | 3-5 天 | Python + Tempo Query | 後端 A |","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"|
+          **Trace Analyze API** | 3-5 天 | Critical Path 演算法 | 後端 B |","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"|
+          **Service Mapping API** | 2-3 天 | K8s API / Service Mesh | 後端 C |","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"|
+          **RAG Code Search API** | 5-7 天 | RAG 向量檢索 + Git API | 後端 D |","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"|
+          **Dify Workflow 整合** | 1-2 天 | 配置 + 測試 | DevOps |","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"---","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"##
+          🚀 快速啟動","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"1.
+          **匯入 Workflow**: 上傳 `slow-rca-workflow.yml` 到 Dify","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"2.
+          **設定環境變數**: `DEV_DOMAIN`, `TEMPO_API_URL`, `RAG_API_URL`","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"3.
+          **實作 API**: 先做 Tempo API（優先級 1）","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"4.
+          **測試**: 使用範例告警信驗證流程","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"---","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"##
+          📞 聯絡人","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"-
+          **專案負責人**: Alex Chang","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"-
+          **詳細文檔**: 請見 `README.md` 和 `PLAN.md`","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"-
+          **API 契約**: 請見 `README.md` 第 4 章","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"---","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"##
+          🎯 MVP 最小可行版本","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"**只需實作前
+          2 個 API 即可跑通流程**:","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"1.
+          ✅ Tempo Search API","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"2.
+          ✅ Trace Analyze API","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"3.
+          ⏸️ Service Mapping API（先用硬編碼映射表）","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"4.
+          ⏸️ RAG Code Search API（報告不含程式碼片段）","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"---","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""}],"direction":null,"format":"","indent":0,"type":"root","version":1}}'
+        theme: blue
+        title: ''
+        type: ''
+        width: 987
+      height: 796
+      id: '1768786459679'
+      position:
+        x: -1224.1728302743236
+        y: 75.00000000000001
+      positionAbsolute:
+        x: -1224.1728302743236
+        y: 75.00000000000001
+      selected: false
+      sourcePosition: right
+      targetPosition: left
+      type: custom-note
+      width: 987
+    - data:
+        author: alexchang
+        desc: ''
+        height: 88
+        selected: false
+        showAuthor: true
+        text: '{"root":{"children":[{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"可以再多分出一個
+          coding agent 來單獨分析原始碼，","type":"text","version":1},{"type":"linebreak","version":1},{"detail":0,"format":0,"mode":"normal","style":"","text":"降低主推裡模型
+          context loading ","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""}],"direction":null,"format":"","indent":0,"type":"root","version":1}}'
+        theme: blue
+        title: ''
+        type: ''
+        width: 240
+      height: 88
+      id: '1768788540681'
+      position:
+        x: 1869.6094021656752
+        y: 536.3201712738705
+      positionAbsolute:
+        x: 1869.6094021656752
+        y: 536.3201712738705
+      sourcePosition: right
+      targetPosition: left
+      type: custom-note
+      width: 240
+    - data:
+        author: alexchang
+        desc: ''
+        height: 347
+        selected: false
+        showAuthor: true
+        text: '{"root":{"children":[{"children":[],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":1,"mode":"normal","style":"","text":"建議新增欄位","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"{","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"  \"topology_context\":
+          {","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"    \"root_service\":
+          \"order-service\",","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"    \"dependencies_1hop\":
+          [","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"      {\"service\":\"inventory-service\",\"type\":\"http\",\"owner_team\":\"inv-team\"},","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"      {\"service\":\"postgres\",\"type\":\"db\",\"owner_team\":\"db-team\"}","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"    ],","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"    \"call_paths\":
+          [","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"      \"order-service
+          -> postgres\",","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"      \"order-service
+          -> inventory-service\"","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"    ]","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"  }","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""},{"children":[{"detail":0,"format":0,"mode":"normal","style":"","text":"}","type":"text","version":1}],"direction":null,"format":"","indent":0,"type":"paragraph","version":1,"textFormat":0,"textStyle":""}],"direction":null,"format":"","indent":0,"type":"root","version":1}}'
+        theme: blue
+        title: ''
+        type: ''
+        width: 396
+      height: 347
+      id: '1768788837135'
+      position:
+        x: 1451.25
+        y: -1.0081916998329064
+      positionAbsolute:
+        x: 1451.25
+        y: -1.0081916998329064
+      selected: true
+      sourcePosition: right
+      targetPosition: left
+      type: custom-note
+      width: 396
+    viewport:
+      x: -864.5733113303177
+      y: -33.77578004151053
+      zoom: 1.1184658723271792
+  rag_pipeline_variables: []
