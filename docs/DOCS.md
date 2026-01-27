@@ -72,6 +72,47 @@ Coding Agent 參考指南
 
 ---
 
+### 📋 [HANDOVER.md](HANDOVER.md)
+Workflow 移植任務交接文件
+
+**適合**: 需要將流程移植到 n8n/Dify 的開發者
+
+**內容**:
+- 專案背景快速了解
+- 需移植的 8 個步驟
+- API 快速參考
+- Workflow 設計建議
+- 驗收標準
+
+---
+
+### 🔄 [workflow-api-usage.md](workflow-api-usage.md)
+Workflow API 使用說明
+
+**適合**: Workflow 開發者、整合工程師
+
+**內容**:
+- 使用中的 API 端點
+- 資料流轉換
+- 完整流程圖
+- 測試步驟
+
+---
+
+### 📊 [dify-readme.md](dify-readme.md)
+Dify Workflow 完整專案文檔
+
+**適合**: Dify 平台使用者
+
+**內容**:
+- 工作流程詳解
+- 節點設計說明
+- 快速開始
+- 設計原則
+- 注意事項與風險
+
+---
+
 ## 服務文檔
 
 ### Tempo Latency Anomaly Service
@@ -162,7 +203,9 @@ curl http://localhost:3200/ready   # Tempo
   │
   ├─→ 參考 AGENT_GUIDE.md（深入開發）
   │
-  └─→ 閱讀 DEPLOYMENT.md（部署到生產）
+  ├─→ 閱讀 DEPLOYMENT.md（部署到生產）
+  │
+  └─→ 參考 HANDOVER.md（移植到 n8n/Dify）
 ```
 
 ---
