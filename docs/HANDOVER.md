@@ -68,6 +68,14 @@ GET /v1/available
 
 # 2. 搜尋 traces
 GET /v1/traces?service=trace-demo-service&endpoint=POST%20/api/order/create&start=1706300000&end=1706310000&limit=5
+若input 是 2026-01-22 15:45:00 可以透過 js 的 function : 
+'''javascript
+
+const input =  new Date("2026-01-22 15:45:00").getTime();
+
+'''
+new 
+建議可以
 # Response: {count, traces: [{traceID, durationMs}]}
 
 # 3. 獲取最慢 span
