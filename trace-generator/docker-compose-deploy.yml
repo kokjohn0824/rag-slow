@@ -1,0 +1,23 @@
+version: "3.9"
+
+services:
+  trace-generator:
+    build:
+      context: .
+    image: trace-generator:latest
+    container_name: trace-generator
+    restart: unless-stopped
+    environment:
+      - TARGET_URL=${TARGET_URL:-http://trace-demo-app:8080}
+      - INTERVAL_SECONDS=${INTERVAL_SECONDS:-30}
+      - LOG_PATH=${LOG_PATH:-/logs/trace-generator.log}
+      - ENABLED_APIS=${ENABLED_APIS:-order,user,report,search,batch,simulate}
+      - TIMEOUT_SECONDS=${TIMEOUT_SECONDS:-30}
+    volumes:
+      - ./logs:/logs
+    networks:
+      - tempo-network
+
+networks:
+  tempo-network:
+    external: true
