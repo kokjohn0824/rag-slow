@@ -153,17 +153,26 @@ echo "  Span Name: $SPAN_NAME"
 echo "  Duration: ${DURATION_MS}ms"
 echo ""
 
-# 步驟 5: 從 Anomaly Service 獲取 child spans
-echo -e "${GREEN}步驟 5: 從 Anomaly Service 獲取 child spans${NC}"
-CHILD_SPANS_RESULT=$(curl -s -X POST "${ANOMALY_SERVICE}/v1/traces/child-spans" \
+# 步驟 5: 從 Anomaly Service 獲取 child spans 異常分析
+echo -e "${GREEN}步驟 5: 從 Anomaly Service 獲取 child spans 異常分析${NC}"
+CHILD_SPANS_RESULT=$(curl -s -X POST "${ANOMALY_SERVICE}/v1/traces/child-span-anomalies" \
   -H "Content-Type: application/json" \
-  -d "{\"traceId\":\"${TRACE_ID}\",\"spanId\":\"${SPAN_ID}\"}")
+  -d "{\"traceId\":\"${TRACE_ID}\",\"parentSpanId\":\"${SPAN_ID}\"}")
 
-echo "Child Spans 資訊:"
+echo "Child Spans 異常分析結果:"
 echo "$CHILD_SPANS_RESULT" | jq '{
+  traceId,
   parentSpan: .parentSpan.name,
   childCount,
-  children: [.children[] | {name, durationMs}]
+  anomalyCount,
+  children: [.children[] | {
+    name: .span.name,
+    durationMs: .span.durationMs,
+    isAnomaly,
+    cannotDetermine,
+    baselineSource,
+    explanation
+  }]
 }'
 echo ""
 
@@ -193,24 +202,40 @@ echo ""
 # 步驟 7: 分析結果
 echo -e "${GREEN}步驟 7: 分析結果${NC}"
 echo ""
-echo "=== 效能分析 ==="
+echo "=== 效能與異常分析 ==="
+echo ""
+
+# 顯示異常數量統計
+ANOMALY_COUNT=$(echo "$CHILD_SPANS_RESULT" | jq -r '.anomalyCount')
+CHILD_COUNT=$(echo "$CHILD_SPANS_RESULT" | jq -r '.childCount')
+echo "異常統計: ${ANOMALY_COUNT}/${CHILD_COUNT} 個子操作被判定為異常"
 echo ""
 
 # 找出最慢的 child span
 SLOWEST_CHILD=$(echo "$CHILD_SPANS_RESULT" | jq -r '
   .children 
-  | sort_by(.durationMs) 
+  | sort_by(.span.durationMs) 
   | reverse 
   | .[0] 
-  | "\(.name) (\(.durationMs)ms)"
+  | "\(.span.name) (\(.span.durationMs)ms) | anomaly=\(.isAnomaly)"
 ')
 
 echo "最慢的子操作: $SLOWEST_CHILD"
 echo ""
 
-# 顯示所有 child spans 的 duration
-echo "所有子操作的執行時間:"
-echo "$CHILD_SPANS_RESULT" | jq -r '.children[] | "  - \(.name): \(.durationMs)ms"'
+# 顯示所有 child spans 的 duration 和異常狀態
+echo "所有子操作的執行時間和異常狀態:"
+echo "$CHILD_SPANS_RESULT" | jq -r '.children[] | "  - \(.span.name): \(.span.durationMs)ms | anomaly=\(.isAnomaly) | \(.baselineSource)"'
+echo ""
+
+# 列出被判定為異常的 child spans
+echo "被判定為異常的子操作:"
+ANOMALY_CHILDREN=$(echo "$CHILD_SPANS_RESULT" | jq -r '.children[] | select(.isAnomaly == true) | "  - \(.span.name): \(.span.durationMs)ms | \(.explanation)"')
+if [ -z "$ANOMALY_CHILDREN" ]; then
+  echo "  (無異常)"
+else
+  echo "$ANOMALY_CHILDREN"
+fi
 echo ""
 
 # 顯示原始碼位置
