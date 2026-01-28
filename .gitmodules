@@ -1,0 +1,6 @@
+[submodule "tempo-latency-anomaly-service"]
+	path = tempo-latency-anomaly-service
+	url = https://github.com/kokjohn0824/tempo-latency-anomaly-service.git
+[submodule "tempo-otlp-trace-demo"]
+	path = tempo-otlp-trace-demo
+	url = https://github.com/kokjohn0824/tempo-otlp-trace-demo.git
