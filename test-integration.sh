@@ -23,8 +23,8 @@ YELLOW='\033[1;33m'
 NC='\033[0m'
 
 # 遠端配置
-ANOMALY_SERVICE="${ANOMALY_SERVICE:-http://192.168.4.208:3201}"
-TRACE_DEMO_SERVICE="${TRACE_DEMO_SERVICE:-http://192.168.4.208:3202}"
+ANOMALY_SERVICE="${ANOMALY_SERVICE:-http://192.168.4.208:3202}"
+TRACE_DEMO_SERVICE="${TRACE_DEMO_SERVICE:-http://192.168.4.208:3201}"
 TEMPO_SERVICE="${TEMPO_SERVICE:-http://192.168.4.208:3200}"
 
 # 模擬異常參數 (可透過環境變數或命令列參數設定)
@@ -267,8 +267,8 @@ echo "Response: $RESPONSE"
 echo ""
 
 # 等待 trace 傳送到 Tempo
-echo "等待 15 秒讓 trace 傳送到 Tempo..."
-sleep 15
+echo "等待 5 秒讓 trace 傳送到 Tempo..."
+sleep 5
 
 # ============================================================================
 # 步驟 3: 使用 Anomaly Service 的 /v1/traces API 搜尋該 endpoint 的 traces

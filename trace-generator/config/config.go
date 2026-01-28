@@ -19,7 +19,7 @@ type Config struct {
 // Load loads configuration from environment variables
 func Load() *Config {
 	cfg := &Config{
-		TargetURL:      getEnv("TARGET_URL", "http://trace-demo-app:8080"),
+		TargetURL:      getEnv("TARGET_URL", "http://trace-demo-app:3201"),
 		Interval:       getDurationEnv("INTERVAL_SECONDS", 30) * time.Second,
 		LogPath:        getEnv("LOG_PATH", "/logs/trace-generator.log"),
 		EnabledAPIs:    getListEnv("ENABLED_APIS", []string{"order", "user", "report", "search", "batch", "simulate"}),

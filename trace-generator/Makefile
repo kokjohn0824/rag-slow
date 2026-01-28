@@ -1,4 +1,5 @@
-.PHONY: help check-deps install-deps fmt vet test build build-local run docker-build docker-run up down restart logs ps clean deploy
+.PHONY: help check-deps install-deps fmt vet test build build-local run docker-build docker-run up down restart logs ps clean deploy \
+	image-save deploy-image deploy-compose deploy-full
 
 # Variables
 APP_NAME := trace-generator
@@ -6,6 +7,16 @@ DOCKER_IMAGE := $(APP_NAME)
 DOCKER_TAG := latest
 COMPOSE_FILE := docker-compose-deploy.yml
 COMPOSE := $(shell command -v docker-compose >/dev/null 2>&1 && echo docker-compose || echo "docker compose")
+
+# Remote deployment settings
+REMOTE_HOST ?= 192.168.4.208
+REMOTE_USER ?= root
+REMOTE_PATH ?= /root/test
+REMOTE_IMAGE_PATH ?= $(REMOTE_PATH)/images
+REMOTE_COMPOSE_DIR ?= $(REMOTE_PATH)/trace-generator
+REMOTE_SERVICE_NAME ?= trace-generator
+ARCH ?= amd64
+PLATFORM ?= linux/$(ARCH)
 
 # Colors
 BLUE := \033[0;34m
@@ -25,6 +36,18 @@ help:
 	@echo "$(GREEN)Available commands:$(NC)"
 	@echo ""
 	@grep -E '^## ' $(MAKEFILE_LIST) | sed 's/## /  $(YELLOW)/' | sed 's/:/ $(NC)-/' | column -t -s '-'
+	@echo ""
+	@echo "$(GREEN)Remote deployment:$(NC)"
+	@echo "  $(YELLOW)image-save$(NC)      - Build and save Docker image as tar file"
+	@echo "  $(YELLOW)deploy-image$(NC)    - Build, save and deploy Docker image to remote server"
+	@echo "  $(YELLOW)deploy-compose$(NC)  - Deploy docker-compose.yml to remote server"
+	@echo "  $(YELLOW)deploy-full$(NC)     - Full deployment (image + compose + restart)"
+	@echo ""
+	@echo "$(GREEN)Variables (override with VAR=value):$(NC)"
+	@echo "  REMOTE_HOST=$(REMOTE_HOST)"
+	@echo "  REMOTE_USER=$(REMOTE_USER)"
+	@echo "  REMOTE_PATH=$(REMOTE_PATH)"
+	@echo "  ARCH=$(ARCH) (amd64 or arm64)"
 	@echo ""
 	@echo "$(GREEN)Compose file:$(NC) $(COMPOSE_FILE)"
 	@echo ""
@@ -141,3 +164,52 @@ deploy: check-deps
 	@mkdir -p logs
 	$(COMPOSE) -f $(COMPOSE_FILE) up -d --build trace-generator
 	@echo "$(GREEN)✓ Deploy complete$(NC)"
+
+## image-save: Build and save Docker image as tar file
+image-save:
+	@echo "$(BLUE)Building Docker image for $(PLATFORM)...$(NC)"
+	docker buildx build --platform=$(PLATFORM) --load -t $(DOCKER_IMAGE):latest .
+	@echo "$(BLUE)Saving Docker image as tar file...$(NC)"
+	docker save $(DOCKER_IMAGE):latest -o $(DOCKER_IMAGE)-$(ARCH).tar
+	@echo "$(GREEN)✓ Image saved: $(DOCKER_IMAGE)-$(ARCH).tar$(NC)"
+
+## deploy-image: Build, save and deploy Docker image to remote server
+deploy-image: image-save
+	@echo "$(BLUE)Deploying Docker image to $(REMOTE_USER)@$(REMOTE_HOST)...$(NC)"
+	@echo "$(YELLOW)Creating remote directory...$(NC)"
+	@ssh $(REMOTE_USER)@$(REMOTE_HOST) "mkdir -p $(REMOTE_IMAGE_PATH)"
+	@echo "$(YELLOW)Uploading image file...$(NC)"
+	@echo "put $(DOCKER_IMAGE)-$(ARCH).tar $(REMOTE_IMAGE_PATH)/" | sftp $(REMOTE_USER)@$(REMOTE_HOST)
+	@echo "$(YELLOW)Loading Docker image on remote host...$(NC)"
+	@ssh $(REMOTE_USER)@$(REMOTE_HOST) "docker load -i $(REMOTE_IMAGE_PATH)/$(DOCKER_IMAGE)-$(ARCH).tar"
+	@echo "$(GREEN)✓ Image deployment completed!$(NC)"
+	@echo "  - Image: $(REMOTE_USER)@$(REMOTE_HOST):$(REMOTE_IMAGE_PATH)/$(DOCKER_IMAGE)-$(ARCH).tar"
+
+## deploy-compose: Deploy docker-compose.yml to remote server
+deploy-compose:
+	@echo "$(BLUE)Deploying docker-compose configuration to $(REMOTE_USER)@$(REMOTE_HOST)...$(NC)"
+	@echo "$(YELLOW)Creating remote directory...$(NC)"
+	@ssh $(REMOTE_USER)@$(REMOTE_HOST) "mkdir -p $(REMOTE_COMPOSE_DIR)"
+	@echo "$(YELLOW)Uploading docker-compose-deploy.yml...$(NC)"
+	@echo "put $(COMPOSE_FILE) $(REMOTE_COMPOSE_DIR)/docker-compose.yml" | sftp $(REMOTE_USER)@$(REMOTE_HOST)
+	@echo "$(YELLOW)Creating logs directory on remote host...$(NC)"
+	@ssh $(REMOTE_USER)@$(REMOTE_HOST) "mkdir -p $(REMOTE_COMPOSE_DIR)/logs"
+	@echo "$(GREEN)✓ Configuration deployment completed!$(NC)"
+
+## deploy-full: Full deployment (image + compose + restart)
+deploy-full: deploy-image deploy-compose
+	@echo "$(BLUE)Restarting services on remote host...$(NC)"
+	@ssh $(REMOTE_USER)@$(REMOTE_HOST) "cd $(REMOTE_COMPOSE_DIR) && docker network inspect tempo-network >/dev/null 2>&1 || docker network create tempo-network"
+	@ssh $(REMOTE_USER)@$(REMOTE_HOST) "cd $(REMOTE_COMPOSE_DIR) && docker compose down && docker compose up -d"
+	@echo "$(YELLOW)Waiting for services to start...$(NC)"
+	@sleep 10
+	@echo "$(YELLOW)Checking service status...$(NC)"
+	@ssh $(REMOTE_USER)@$(REMOTE_HOST) "cd $(REMOTE_COMPOSE_DIR) && docker compose ps" || true
+	@echo ""
+	@echo "$(GREEN)✓ Full deployment completed successfully!$(NC)"
+	@echo "  - Host: $(REMOTE_USER)@$(REMOTE_HOST)"
+	@echo "  - Path: $(REMOTE_COMPOSE_DIR)"
+	@echo "  - Service: $(REMOTE_SERVICE_NAME)"
+	@echo ""
+	@echo "$(YELLOW)View logs:$(NC)"
+	@echo "  ssh $(REMOTE_USER)@$(REMOTE_HOST) 'cd $(REMOTE_COMPOSE_DIR) && docker compose logs -f $(REMOTE_SERVICE_NAME)'"
