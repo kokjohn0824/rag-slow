@@ -110,7 +110,7 @@ workflow:
         targetType: llm
       id: start-to-parse-alert
       selected: false
-      source: node-start
+      source: 1769739092899
       sourceHandle: source
       target: node-parse-alert
       targetHandle: target
@@ -236,7 +236,7 @@ workflow:
           type: paragraph
           variable: targetLog
       height: 109
-      id: node-start
+      id: 1769739092899
       position:
         x: -190
         y: 337.5
@@ -285,7 +285,7 @@ workflow:
             '
         - id: user-parse-alert
           role: user
-          text: "請解析以下告警信內容，並依指定欄位輸出結構化 JSON。\n\n告警信內容：\n{{#node-start.targetLog#}}\n\
+          text: "請解析以下告警信內容，並依指定欄位輸出結構化 JSON。\n\n告警信內容：\n{{#1769739092899.targetLog#}}\n\
             \n輸出欄位結構如下：\n{\n  \"event\": string,\n  \"device\": string,\n  \"host\"\
             : string,\n  \"env\": string,\n  \"service_name\": string,\n  \"time_stamp\"\
             : string,\n  \"url\": string,\n  \"domain\": string,\n  \"port\": number\
